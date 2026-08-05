@@ -1,0 +1,45 @@
+networks:
+  korp-network:
+    driver: bridge # Rede no modo bridge 
+
+services:
+  http-server-projeto-korp:
+    build:
+      context: ./app
+      dockerfile: DockerFile
+    networks:
+      - korp-network
+    
+  nginx:
+    image: nginx:latest 
+    ports:
+      - "80:80" 
+    volumes:
+      - ./config/nginx:/etc/nginx/conf.d/ 
+    networks:
+      - korp-network
+    depends_on:
+      - http-server-projeto-korp
+  
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - korp-network
+
+  grafana:    
+    image: grafana/grafana    
+    ports:
+      - "3000:3000"    
+    networks:
+      - korp-network
+    volumes:      
+      - grafana_storage:/var/lib/grafana    
+    environment:      
+      - GF_SECURITY_ADMIN_PASSWORD=senha_super_segura
+  
+volumes:  
+  grafana_storage: {}
