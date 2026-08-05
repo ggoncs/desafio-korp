@@ -1,5 +1,6 @@
 # Build stage
-FROM golang:1.24.4-alpine AS builder
+# https://hub.docker.com/layers/library/golang/1.25-alpine/images/sha256-a7a64bfb3b8a4724993e1c49d01ad331b5d8bc52461b3ecf89e9aedf3aadc635
+FROM golang:1.25-alpine AS builder
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
