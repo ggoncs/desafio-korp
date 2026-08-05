@@ -12,7 +12,6 @@ graph TD
     subgraph Rede_Isolada [Rede Isolada do Projeto]
         pfSense -->|LAN| SwitchVirtual[Switch Virtual / Bridge]
         
-        SwitchVirtual -->|IP: <IP_DO_PIHOLE>| LXC_Pihole[LXC Pi-hole<br>Resolução de DNS]
         SwitchVirtual -->|IP: <IP_DA_VM_UBUNTU>| VM_Ubuntu[VM Ubuntu 24.04<br>Host Docker & Ansible Target]
     end
 
