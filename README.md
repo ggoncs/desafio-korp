@@ -26,4 +26,4 @@ graph TD
         Prometheus -->|Coleta métricas via /metrics| GoApp
         Grafana -->|Lê dados e gera Dashboard| Prometheus
     end
-``
+```
