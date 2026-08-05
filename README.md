@@ -12,7 +12,7 @@ graph TD
     subgraph Rede_Isolada [Rede Isolada do Projeto]
         pfSense -->|LAN| SwitchVirtual[Switch Virtual / Bridge]
         
-        SwitchVirtual -->|IP: <IP_DA_VM_UBUNTU>| VM_Ubuntu[VM Ubuntu 24.04<br>Host Docker & Ansible Target]
+        SwitchVirtual -->|IP: 10.0.10.10| VM_Ubuntu[VM Ubuntu 24.04<br>Host Docker & Ansible Target]
     end
 
     subgraph VM_Ubuntu_Docker [Containers na VM Ubuntu]
