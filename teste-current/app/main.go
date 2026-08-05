@@ -10,8 +10,7 @@ import (
 	// 	   https://prometheus.io/docs/tutorials/instrumenting_http_server_in_go/
 	// 	   https://dev.to/sunnynazar/the-complete-guide-to-prometheus-metric-types-promql-alerting-and-troubleshooting-5a69
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/promhttp"
-
+        "github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 //Definindo variáveis das métricas
@@ -20,14 +19,14 @@ var (
 	requestVolume = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "http_requests_total",
-			Help :"Volume de requisições",
+			Help: "Volume de requisições",
 		},
 		[]string{"path"},
 	)
 	serviceAvailability = prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Name: "service_available",
-			Help "Disponibilidade do serviço (1 up/0 down)",
+			Help: "Disponibilidade do serviço (1 up/0 down)",
 		},	
 	)
 )	
