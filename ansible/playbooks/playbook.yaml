@@ -37,20 +37,6 @@
       failed_when: not compose_file.stat.exists
     
         
-    - name: Instalar dependências iniciais
-      apt:
-        name:
-          - apt-transport-https
-          - ca-certificates
-          - curl
-          - software-properties-common
-          - python3-pip
-          - rsync
-        state: present
-        update_cache: yes
-      become: yes
-    
-        
     - name: Criar diretório do projeto no servidor
       file:
         path: "{{ deploy_path }}"

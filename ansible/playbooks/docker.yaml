@@ -1,6 +1,6 @@
 - name: Provisionamento do Ambiente
   hosts: korp-stack
-  become: no
+  become: yes
   gather_facts: yes
   
   tasks:
@@ -18,8 +18,10 @@
           - curl
           - software-properties-common
           - python3-pip
+          - rsync
         state: present
         update_cache: yes
+      become: yes
 
     - name: Adicionar chave GPG do Docker
       apt_key:
