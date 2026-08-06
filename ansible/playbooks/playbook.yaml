@@ -1,0 +1,241 @@
+---
+- import_playbook: docker.yaml
+
+- name: Deploy Completo
+  hosts: korp-stack
+  become: yes
+  gather_facts: yes
+  
+  vars:
+    project_name: "projeto-korp"
+    deploy_path: "/opt/{{ project_name }}"
+    app_port: 80
+    healthcheck_endpoint: "/projeto-korp"
+    healthcheck_retries: 30
+    healthcheck_delay: 5
+    healthcheck_timeout: 10
+    
+  tasks:
+        
+    - name: Verificar distribuição compatível
+      assert:
+        that:
+          - ansible_os_family == "Debian"
+        fail_msg: "Este playbook só suporta distribuições baseadas em Debian/Ubuntu"
+    
+    - name: Verificar se o diretório local existe
+      stat:
+        path: "{{ playbook_dir }}"
+      delegate_to: localhost
+      register: local_dir
+      failed_when: not local_dir.stat.exists
+    
+    - name: Verificar se docker-compose.yml existe localmente
+      stat:
+        path: "{{ playbook_dir }}/docker-compose.yml"
+      delegate_to: localhost
+      register: compose_file
+      failed_when: not compose_file.stat.exists
+    
+        
+    - name: Instalar dependências iniciais
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+          - rsync
+        state: present
+        update_cache: yes
+    
+    - name: Adicionar chave GPG do Docker
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+    
+    - name: Adicionar repositório do Docker
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+    
+    - name: Instalar Docker e Docker Compose
+      apt:
+        name:
+          - docker-ce
+          - docker-compose-plugin
+        state: present
+        update_cache: yes
+    
+    - name: Garantir que o serviço do Docker está rodando
+      service:
+        name: docker
+        state: started
+        enabled: yes
+    
+    - name: Adicionar usuário ao grupo docker
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+      when: ansible_user != 'root'
+    
+        
+    - name: Criar diretório do projeto no servidor
+      file:
+        path: "{{ deploy_path }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+    
+    - name: Sincronizar arquivos com rsync (excluindo arquivos desnecessários)
+      synchronize:
+        src: "./"
+        dest: "{{ deploy_path }}/"
+        delete: yes
+        rsync_opts:
+          - "--exclude=.git"
+          - "--exclude=.gitignore"
+          - "--exclude=node_modules"
+          - "--exclude=.env.example"
+          - "--exclude=*.log"
+          - "--exclude=*.tmp"
+          - "--exclude=.DS_Store"
+          - "--exclude=__pycache__"
+          - "--exclude=*.pyc"
+          - "--exclude=.pytest_cache"
+          - "--exclude=.coverage"
+          - "--exclude=.vscode"
+          - "--exclude=.idea"
+          - "--exclude=.dockerignore"
+          - "--exclude=Dockerfile*"  # Se usar build, manter docker-compose.yml
+        archive: yes
+        compress: yes
+        rsync_timeout: 60
+      delegate_to: "{{ inventory_hostname }}"
+    
+    - name: Garantir permissões corretas dos arquivos copiados
+      file:
+        path: "{{ deploy_path }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        recurse: yes
+        mode: '0755'
+    
+       
+    - name: Parar containers antigos (rollback seguro)
+      command: /usr/bin/docker compose down
+      args:
+        chdir: "{{ deploy_path }}"
+      become: yes
+      become_user: "{{ ansible_user }}"
+      ignore_errors: yes
+      register: compose_down
+    
+    - name: Construir imagens e subir containers com Docker Compose
+      command: /usr/bin/docker compose up -d --build --remove-orphans
+      args:
+        chdir: "{{ deploy_path }}"
+      become: yes
+      become_user: "{{ ansible_user }}"
+      register: compose_up
+      async: 300
+      poll: 10
+    
+    - name: Verificar status dos containers
+      command: /usr/bin/docker compose ps
+      args:
+        chdir: "{{ deploy_path }}"
+      become: yes
+      become_user: "{{ ansible_user }}"
+      register: container_status
+    
+    - name: Exibir status dos containers
+      debug:
+        msg: "{{ container_status.stdout_lines }}"
+    
+     
+    - name: Aguardar serviço ficar disponível (healthcheck)
+      uri:
+        url: "http://localhost:{{ app_port }}{{ healthcheck_endpoint }}"
+        method: GET
+        status_code: 200
+        timeout: "{{ healthcheck_timeout }}"
+        return_content: yes
+        validate_certs: no
+      register: healthcheck_result
+      until: healthcheck_result.status == 200
+      retries: "{{ healthcheck_retries }}"
+      delay: "{{ healthcheck_delay }}"
+      ignore_errors: yes
+      no_log: false
+    
+    - name: Exibir resultado do healthcheck
+      debug:
+        msg: |
+          Status HTTP: {{ healthcheck_result.status }}
+          Tempo de resposta: {{ healthcheck_result.elapsed }} segundos
+          Conteúdo (primeiros 500 caracteres):
+          {{ healthcheck_result.content[:500] if healthcheck_result.content is defined else 'Sem conteúdo' }}
+         
+      when: healthcheck_result.status is defined
+        
+    - name: Executar rollback se o healthcheck falhar
+      block:
+        - name: Parar containers com problema
+          command: /usr/bin/docker compose down
+          args:
+            chdir: "{{ deploy_path }}"
+          become: yes
+          become_user: "{{ ansible_user }}"
+          ignore_errors: yes
+        
+        - name: Restaurar backup anterior (se existir)
+          command: "rsync -av --delete {{ deploy_path }}/../backup_{{ project_name }}/ {{ deploy_path }}/"
+          args:
+            chdir: /opt
+          become: yes
+          become_user: "{{ ansible_user }}"
+          ignore_errors: yes
+        
+        - name: Subir versão anterior
+          command: /usr/bin/docker compose up -d
+          args:
+            chdir: "{{ deploy_path }}"
+          become: yes
+          become_user: "{{ ansible_user }}"
+        
+        - name: Falhar o playbook indicando rollback realizado
+          fail:
+            msg: "Healthcheck falhou! Rollback executado para versão anterior."
+      when: healthcheck_result.status is not defined or healthcheck_result.status != 200
+      ignore_errors: no
+    
+        
+    - name: Criar backup da versão atual (após sucesso)
+      command: "rsync -av --delete {{ deploy_path }}/ /opt/backup_{{ project_name }}/"
+      args:
+        chdir: /opt
+      become: yes
+      become_user: "{{ ansible_user }}"
+      when: healthcheck_result.status == 200
+    
+    - name: Exibir resumo do deploy
+      debug:
+        msg: |
+          Projeto: {{ project_name }}
+          Path: {{ deploy_path }}
+          URL: http://{{ ansible_default_ipv4.address }}:{{ app_port }}{{ healthcheck_endpoint }}
+          Status: Serviço disponível
+          ==========================================
+      when: healthcheck_result.status == 200
+    
+    - name: Avisar sobre necessidade de reconexão (grupo docker)
+      debug:
+        msg: |
+          Usuário {{ ansible_user }} foi adicionado ao grupo docker.
+          Faça logout e login para aplicar as permissões.
+      when: ansible_user != 'root'
