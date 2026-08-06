@@ -1,6 +1,5 @@
 ansible_user: "sladmin"
 ansible_shell: "/bin/bash"
-ansible_become_password: "SUA_SENHA_AQUI"
 ansible_groups:
   - sudo
   - adm

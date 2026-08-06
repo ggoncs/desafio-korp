@@ -21,6 +21,13 @@
         that:
           - ansible_os_family == "Debian"
         fail_msg: "Este playbook só suporta distribuições baseadas em Debian/Ubuntu"
+
+    - name: Verificar se docker-compose.yml existe localmente
+      stat:
+        path: "{{ playbook_dir }}/../docker-compose.yml"  
+      delegate_to: localhost
+      register: compose_file
+      failed_when: not compose_file.stat.exists
     
     - name: Verificar se o diretório local existe
       stat:
@@ -48,7 +55,7 @@
 
     - name: Sincronizar arquivos com rsync (excluindo arquivos desnecessários)
       synchronize:
-        src: "./"
+        src: "{{ playbook_dir }}/../"
         dest: "{{ deploy_path }}/"
         delete: yes
         rsync_opts:
@@ -67,6 +74,7 @@
           - "--exclude=.idea"
           - "--exclude=.dockerignore"
           - "--exclude=teste*"
+          - "--exclude=ansible/"
         archive: yes
         compress: yes
         rsync_timeout: 60
