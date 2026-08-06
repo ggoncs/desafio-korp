@@ -8,6 +8,7 @@
   vars:
     project_name: "projeto-korp"
     deploy_path: "/opt/{{ project_name }}"
+    project_root: "{{ playbook_dir }}/../.."
     app_port: 80
     healthcheck_endpoint: "/projeto-korp"
     healthcheck_retries: 30
@@ -24,7 +25,7 @@
 
     - name: Verificar se docker-compose.yml existe localmente
       stat:
-        path: "{{ playbook_dir }}/../../docker-compose.yml"  
+        path: "{{ project_root }}/docker-compose.yml"  
       delegate_to: localhost
       register: compose_file
       failed_when: not compose_file.stat.exists
@@ -47,7 +48,7 @@
 
     - name: Sincronizar arquivos com rsync (excluindo arquivos desnecessários)
       synchronize:
-        src: "{{ playbook_dir }}/../../"
+        src: "{{ project_root }}"
         dest: "{{ deploy_path }}/"
         delete: yes
         rsync_opts:
