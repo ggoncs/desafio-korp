@@ -141,7 +141,7 @@
           ignore_errors: yes
         
         - name: Restaurar backup anterior (se existir)
-          command: "rsync -av --delete {{ deploy_path }}/../backup_{{ project_name }}/ {{ deploy_path }}/"
+          command: "rsync -av --delete /opt/backup_{{ project_name }}/ {{ deploy_path }}/"
           args:
             chdir: /opt
           ignore_errors: yes
@@ -157,7 +157,16 @@
       when: healthcheck_result.status is not defined or healthcheck_result.status != 200
       ignore_errors: no
     
-        
+      - name: Criar diretório de backup (se não existir)
+        file:
+          path: "/opt/backup_{{ project_name }}"
+          state: directory
+          owner: "{{ ansible_user }}"
+          group: "{{ ansible_user }}"
+          mode: '0755'
+        become: yes
+        when: healthcheck_result.status == 200
+
     - name: Criar backup da versão atual (após sucesso)
       command: "rsync -av --delete {{ deploy_path }}/ /opt/backup_{{ project_name }}/"
       args:
