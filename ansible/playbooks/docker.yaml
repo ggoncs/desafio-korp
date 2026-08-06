@@ -1,5 +1,5 @@
 - name: Provisionamento do Ambiente
-  hosts: korp-stack
+  hosts: proxmox_vm 
   become: yes
   gather_facts: yes
   
@@ -58,10 +58,7 @@
         groups: docker
         append: yes
       when: ansible_user != 'root'
-
-    - name: Avisar sobre necessidade de reconexão
-      debug:
-        msg: |
-          Docker instalado com sucesso!
-          Faça logout e login para aplicar o grupo docker ao usuário {{ ansible_user }}
+    
+    - name: Reset de conexão
+      meta: reset_connection
       when: ansible_user != 'root'
