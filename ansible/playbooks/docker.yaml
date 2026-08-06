@@ -1,6 +1,6 @@
 - name: Provisionamento do Ambiente
   hosts: korp-stack
-  become: yes
+  become: no
   gather_facts: yes
   
   tasks:
