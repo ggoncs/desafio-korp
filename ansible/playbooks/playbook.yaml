@@ -157,15 +157,15 @@
       when: healthcheck_result.status is not defined or healthcheck_result.status != 200
       ignore_errors: no
     
-      - name: Criar diretório de backup (se não existir)
-        file:
-          path: "/opt/backup_{{ project_name }}"
-          state: directory
-          owner: "{{ ansible_user }}"
-          group: "{{ ansible_user }}"
-          mode: '0755'
-        become: yes
-        when: healthcheck_result.status == 200
+    - name: Criar diretório de backup (se não existir)
+      file:
+        path: "/opt/backup_{{ project_name }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+      become: yes
+      when: healthcheck_result.status == 200
 
     - name: Criar backup da versão atual (após sucesso)
       command: "rsync -av --delete {{ deploy_path }}/ /opt/backup_{{ project_name }}/"
