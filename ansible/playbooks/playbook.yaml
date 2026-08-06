@@ -3,7 +3,6 @@
 
 - name: Deploy Completo
   hosts: proxmox_vm
-  become: yes
   gather_facts: yes
   
   vars:
@@ -49,37 +48,7 @@
           - rsync
         state: present
         update_cache: yes
-    
-    - name: Adicionar chave GPG do Docker
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
-    
-    - name: Adicionar repositório do Docker
-      apt_repository:
-        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
-        state: present
-    
-    - name: Instalar Docker e Docker Compose
-      apt:
-        name:
-          - docker-ce
-          - docker-compose-plugin
-        state: present
-        update_cache: yes
-    
-    - name: Garantir que o serviço do Docker está rodando
-      service:
-        name: docker
-        state: started
-        enabled: yes
-    
-    - name: Adicionar usuário ao grupo docker
-      user:
-        name: "{{ ansible_user }}"
-        groups: docker
-        append: yes
-      when: ansible_user != 'root'
+      become: yes
     
         
     - name: Criar diretório do projeto no servidor
@@ -89,7 +58,8 @@
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
         mode: '0755'
-    
+      become: yes
+
     - name: Sincronizar arquivos com rsync (excluindo arquivos desnecessários)
       synchronize:
         src: "./"
@@ -114,7 +84,6 @@
         archive: yes
         compress: yes
         rsync_timeout: 60
-      delegate_to: "{{ inventory_hostname }}"
     
     - name: Garantir permissões corretas dos arquivos copiados
       file:
@@ -130,8 +99,6 @@
       command: /usr/bin/docker compose down
       args:
         chdir: "{{ deploy_path }}"
-      become: yes
-      become_user: "{{ ansible_user }}"
       ignore_errors: yes
       register: compose_down
     
@@ -139,8 +106,6 @@
       command: /usr/bin/docker compose up -d --build --remove-orphans
       args:
         chdir: "{{ deploy_path }}"
-      become: yes
-      become_user: "{{ ansible_user }}"
       register: compose_up
       async: 300
       poll: 10
@@ -149,8 +114,6 @@
       command: /usr/bin/docker compose ps
       args:
         chdir: "{{ deploy_path }}"
-      become: yes
-      become_user: "{{ ansible_user }}"
       register: container_status
     
     - name: Exibir status dos containers
@@ -189,24 +152,18 @@
           command: /usr/bin/docker compose down
           args:
             chdir: "{{ deploy_path }}"
-          become: yes
-          become_user: "{{ ansible_user }}"
           ignore_errors: yes
         
         - name: Restaurar backup anterior (se existir)
           command: "rsync -av --delete {{ deploy_path }}/../backup_{{ project_name }}/ {{ deploy_path }}/"
           args:
             chdir: /opt
-          become: yes
-          become_user: "{{ ansible_user }}"
           ignore_errors: yes
         
         - name: Subir versão anterior
           command: /usr/bin/docker compose up -d
           args:
             chdir: "{{ deploy_path }}"
-          become: yes
-          become_user: "{{ ansible_user }}"
         
         - name: Falhar o playbook indicando rollback realizado
           fail:
@@ -219,8 +176,6 @@
       command: "rsync -av --delete {{ deploy_path }}/ /opt/backup_{{ project_name }}/"
       args:
         chdir: /opt
-      become: yes
-      become_user: "{{ ansible_user }}"
       when: healthcheck_result.status == 200
     
     - name: Exibir resumo do deploy
