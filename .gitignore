@@ -31,6 +31,9 @@ go.work.sum
 # .idea/
 # .vscode/
 
-#Pasta de testes
+# Pasta de testes
 
 teste*/
+
+# Pastas e arquivos .old
+*.old
