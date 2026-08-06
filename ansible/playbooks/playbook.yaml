@@ -24,7 +24,7 @@
 
     - name: Verificar se docker-compose.yml existe localmente
       stat:
-        path: "{{ playbook_dir }}/../docker-compose.yml"  
+        path: "{{ playbook_dir }}/../../docker-compose.yml"  
       delegate_to: localhost
       register: compose_file
       failed_when: not compose_file.stat.exists
@@ -36,14 +36,6 @@
       register: local_dir
       failed_when: not local_dir.stat.exists
     
-    - name: Verificar se docker-compose.yaml existe localmente
-      stat:
-        path: "{{ playbook_dir }}/docker-compose.yaml"
-      delegate_to: localhost
-      register: compose_file
-      failed_when: not compose_file.stat.exists
-    
-        
     - name: Criar diretório do projeto no servidor
       file:
         path: "{{ deploy_path }}"
@@ -55,7 +47,7 @@
 
     - name: Sincronizar arquivos com rsync (excluindo arquivos desnecessários)
       synchronize:
-        src: "{{ playbook_dir }}/../"
+        src: "{{ playbook_dir }}/../../"
         dest: "{{ deploy_path }}/"
         delete: yes
         rsync_opts:
