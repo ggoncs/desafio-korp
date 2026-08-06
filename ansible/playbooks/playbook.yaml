@@ -2,7 +2,7 @@
 - import_playbook: docker.yaml
 
 - name: Deploy Completo
-  hosts: korp-stack
+  hosts: proxmox_vm
   become: yes
   gather_facts: yes
   
@@ -110,7 +110,7 @@
           - "--exclude=.vscode"
           - "--exclude=.idea"
           - "--exclude=.dockerignore"
-          - "--exclude=Dockerfile*"  # Se usar build, manter docker-compose.yml
+          - "--exclude=teste*"
         archive: yes
         compress: yes
         rsync_timeout: 60
@@ -230,7 +230,6 @@
           Path: {{ deploy_path }}
           URL: http://{{ ansible_default_ipv4.address }}:{{ app_port }}{{ healthcheck_endpoint }}
           Status: Serviço disponível
-          ==========================================
       when: healthcheck_result.status == 200
     
     - name: Avisar sobre necessidade de reconexão (grupo docker)
