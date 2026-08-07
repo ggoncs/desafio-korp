@@ -19,7 +19,7 @@ O ambiente foi provisionado de forma isolada em Proxmox, utilizando o sistema op
 ### 2. Monitoramento e Observabilidade
 * **Métricas Expostas:** A aplicação utiliza a biblioteca oficial `client_golang` do Prometheus para exportar o contador de volume de requisições (`http_requests_total`) e o medidor de disponibilidade (`service_available` configurado como *Gauge* com estado binário).
 * **Coleta (Scraping):** O Prometheus executa a coleta (*scrape*) direcionada ao target interno a cada 5 segundos.
-* **Bônus (Dashboard as Code):** Provisionamento automático do Grafana estruturado declarativamente por meio de mapeamento de volumes para os diretórios `/etc/nginx/conf.d/`, `datasources.yml`, `dashboards.yml` e o arquivo JSON correspondente, eliminando intervenção manual na interface gráfica. Os dashboards foram construídos manualmente e depois exportados como JSON.
+* **Bônus (Dashboard as Code):** Provisionamento automático do Grafana estruturado declarativamente por meio de mapeamento de volumes (config/grafana/provisioning) e o arquivo JSON correspondente, eliminando intervenção manual na interface gráfica. Os dashboards foram construídos manualmente e depois exportados.
 
 ### 3. Automação (Ansible)
 * **Playbooks Modulares:** A automação divide-se em:
