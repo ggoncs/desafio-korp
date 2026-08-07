@@ -25,7 +25,7 @@
 
     - name: Verificar se docker-compose.yml existe localmente
       stat:
-        path: "{{ project_root }}/docker-compose.yml"  
+        path: "{{ project_root }}/docker-compose.yaml"  
       delegate_to: localhost
       register: compose_file
       failed_when: not compose_file.stat.exists
@@ -133,13 +133,46 @@
          
       when: healthcheck_result.status is defined
         
-    - name: Executar rollback se o healthcheck falhar
+    - name: Verificar se existe backup anterior para rollback
+      stat:
+        path: "/opt/backup_{{ project_name }}"
+      register: backup_dir
+      when: healthcheck_result.status is not defined or healthcheck_result.status != 200
+
+    - name: Tratar falha no healthcheck (Rollback ou Abortar)
       block:
         - name: Parar containers com problema
           command: /usr/bin/docker compose down
           args:
             chdir: "{{ deploy_path }}"
           ignore_errors: yes
+        
+        # Cenário 1: Existe backup (Deploy recorrente)
+        - name: Executar restauração e subir versão anterior
+          block:
+            - name: Restaurar backup anterior
+              command: "rsync -av --delete /opt/backup_{{ project_name }}/ {{ deploy_path }}/"
+              args:
+                chdir: /opt
+            
+            - name: Subir versão anterior
+              command: /usr/bin/docker compose up -d
+              args:
+                chdir: "{{ deploy_path }}"
+                
+            - name: Falhar o playbook (Rollback Executado)
+              fail:
+                msg: "Healthcheck falhou! Rollback executado com sucesso para a versão anterior."
+          when: backup_dir.stat.exists
+        
+        # Cenário 2: Não existe backup (Primeiro Deploy)
+        - name: Falhar o playbook (Sem Rollback)
+          fail:
+            msg: "Healthcheck falhou! Este é o primeiro deploy, não há versão para restaurar. Os containers foram parados para análise."
+          when: not backup_dir.stat.exists
+
+      when: healthcheck_result.status is not defined or healthcheck_result.status != 200
+      ignore_errors: no
         
         - name: Restaurar backup anterior (se existir)
           command: "rsync -av --delete /opt/backup_{{ project_name }}/ {{ deploy_path }}/"

@@ -1,5 +1,0 @@
-ansible_user: "sladmin"
-ansible_shell: "/bin/bash"
-ansible_groups:
-  - sudo
-  - adm
