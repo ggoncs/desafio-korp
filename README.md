@@ -19,7 +19,7 @@ O ambiente foi provisionado de forma isolada em Proxmox, utilizando o sistema op
 ### 2. Monitoramento e Observabilidade
 * **Métricas Expostas:** A aplicação utiliza a biblioteca oficial `client_golang` do Prometheus para exportar o contador de volume de requisições (`http_requests_total`) e o medidor de disponibilidade (`service_available` configurado como *Gauge* com estado binário).
 * **Coleta (Scraping):** O Prometheus executa a coleta (*scrape*) direcionada ao target interno a cada 5 segundos.
-* **Bônus (Dashboard as Code):** Provisionamento automático do Grafana estruturado declarativamente por meio de mapeamento de volumes para os diretórios `/etc/nginx/conf.d/`, `datasources.yml`, `dashboards.yml` e o arquivo JSON correspondente, eliminando intervenção manual na interface gráfica.
+* **Bônus (Dashboard as Code):** Provisionamento automático do Grafana estruturado declarativamente por meio de mapeamento de volumes para os diretórios `/etc/nginx/conf.d/`, `datasources.yml`, `dashboards.yml` e o arquivo JSON correspondente, eliminando intervenção manual na interface gráfica. Os dashboards foram construídos manualmente e depois exportados como JSON.
 
 ### 3. Automação (Ansible)
 * **Playbooks Modulares:** A automação divide-se em:
@@ -65,7 +65,7 @@ O ambiente foi provisionado de forma isolada em Proxmox, utilizando o sistema op
 
 ### A execução ocorre inteiramente a partir do nó de controle (10.0.10.11).
 
-* **Pode-se fazer todo o setup com o seguinte 'oneliner':** `git pull && ansible-playbook ansible/playbooks/presetup.yaml -i ansible/playbooks/hosts.ini --ask-become-pass && ansible-playbook ansible/playbooks/playbook.yaml -i ansible/playbooks/hosts.ini`
+* **Pode-se fazer todo o setup com o seguinte 'oneliner':** `git pull && ansible-playbook ansible/playbooks/presetup.yaml -i ansible/playbooks/hosts.ini --ask-become-pass && ansible-playbook ansible/playbooks/playbook.yaml -i ansible/playbooks/hosts.ini` (Aqui assume-se que já tenha sido realizado um git clone do repositório, caso não o tenha feito, substitua o `pull` por `git clone https://github.com/ggoncs/desafio-korp.git`)
 
 * **1. Setup Inicial (Bootstrap)**
 
@@ -77,7 +77,10 @@ O ambiente foi provisionado de forma isolada em Proxmox, utilizando o sistema op
 Executa a esteira automatizada (instalação de dependências, sincronização de arquivos, subida dos serviços, testes de saúde e salvamento de backup):
 `ansible-playbook ansible/playbooks/playbook.yaml -i ansible/playbooks/hosts.ini`
 
-<img width="1922" height="1053" alt="automacao-completa" src="https://github.com/user-attachments/assets/a89a0067-8c77-4ed1-bbf7-24ef6a4a8ad8" />
+| <img width="1922" height="1053" alt="automacao-completa" src="https://github.com/user-attachments/assets/a89a0067-8c77-4ed1-bbf7-24ef6a4a8ad8" /> |
+|:--:| 
+| *VM de controle rodando o código com sucesso* |
+
 
 * **3. Validação do Serviço**
 
@@ -97,5 +100,12 @@ O endpoint /metrics exposto pelo serviço Go pode ser inspecionado diretamente p
 curl http://localhost:8080/metrics
 ```
 
-<img width="1922" height="1053" alt="endpoint-metrics" src="https://github.com/user-attachments/assets/8a259ad7-2dc0-4800-8610-eb55e952cda7" />
-<img width="1922" height="1053" alt="win10-vm-dashboards" src="https://github.com/user-attachments/assets/eb56e99f-0a68-40c0-b65a-eb7fbc95e3bf" />"""
+| <img width="1922" height="1053" alt="endpoint-metrics" src="https://github.com/user-attachments/assets/8a259ad7-2dc0-4800-8610-eb55e952cda7" /> |
+|:--:| 
+| *VM Fedora na mesma rede isolada acessando o /metrics* |
+
+| <img width="1922" height="1053" alt="win10-vm-dashboards" src="https://github.com/user-attachments/assets/eb56e99f-0a68-40c0-b65a-eb7fbc95e3bf" /> |
+|:--:| 
+| *VM Windows na mesma rede isolada acessando os Dashboards do Grafana* |
+
+""" 
