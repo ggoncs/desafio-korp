@@ -1,0 +1,79 @@
+---
+- name: Setup Inicial e Provisionamento de Segurança
+  hosts: proxmox_vm
+  become: yes
+  gather_facts: yes
+
+  vars:
+    # Caso a variável não venha do host_vars, assume 'sladmin' como padrão
+    automation_user: "{{ ansible_user | default('sladmin') }}"
+
+  tasks:
+    - name: Verificar se a distribuição é suportada (Debian/Ubuntu)
+      assert:
+        that:
+          - ansible_os_family == "Debian"
+        fail_msg: "Este playbook de setup foi feito apenas para sistemas baseados em Debian/Ubuntu."
+
+    - name: Atualizar a cache de pacotes (apt update)
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Instalar pacotes essenciais de sistema
+      apt:
+        name:
+          - sudo
+          - curl
+          - git
+          - rsync
+          - python3
+          - python3-pip
+          - ca-certificates
+        state: present
+
+    - name: Garantir que o grupo 'sudo' existe
+      group:
+        name: sudo
+        state: present
+
+    - name: Garantir que o utilizador de automação existe
+      user:
+        name: "{{ automation_user }}"
+        shell: /bin/bash
+        groups: sudo
+        append: yes
+        state: present
+
+    - name: Configurar Sudo sem senha (Passwordless Sudo) para o utilizador
+      copy:
+        dest: "/etc/sudoers.d/{{ automation_user }}"
+        content: "{{ automation_user }} ALL=(ALL) NOPASSWD: ALL\n"
+        owner: root
+        group: root
+        mode: '0440'
+        validate: 'visudo -cf %s'
+
+    - name: Configurar diretório .ssh do utilizador
+      file:
+        path: "/home/{{ automation_user }}/.ssh"
+        state: directory
+        owner: "{{ automation_user }}"
+        group: "{{ automation_user }}"
+        mode: '0700'
+
+    # OPCIONAL: Se quiser copiar a sua chave SSH pública do seu computador para o servidor
+    - name: Copiar chave pública SSH autorizada (opcional)
+      authorized_key:
+        user: "{{ automation_user }}"
+        state: present
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+      ignore_errors: yes
+
+    - name: Exibir mensagem de conclusão
+      debug:
+        msg: |
+          Setup inicial concluído com sucesso!
+          - Utilizador '{{ automation_user }}' configurado.
+          - Sudo sem senha ativado em /etc/sudoers.d/{{ automation_user }}.
+          - A partir de agora, pode executar o 'playbook.yaml' sem o parâmetro --ask-become-pass.
