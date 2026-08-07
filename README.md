@@ -65,6 +65,8 @@ O ambiente foi provisionado de forma isolada em Proxmox, utilizando o sistema op
 
 ### A execução ocorre inteiramente a partir do nó de controle (10.0.10.11).
 
+* **Pode-se fazer todo o setup com o seguinte 'oneliner':** `git pull && ansible-playbook ansible/playbooks/presetup.yaml -i ansible/playbooks/hosts.ini --ask-become-pass && ansible-playbook ansible/playbooks/playbook.yaml -i ansible/playbooks/hosts.ini`
+
 * **1. Setup Inicial (Bootstrap)**
 
  Executado uma única vez na máquina alvo para configurar o ambiente de privilégios:
