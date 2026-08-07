@@ -65,19 +65,19 @@ O ambiente foi provisionado de forma isolada em Proxmox, utilizando o sistema op
 
 ### A execução ocorre inteiramente a partir do nó de controle (10.0.10.11).
 
-* 1. Setup Inicial (Bootstrap)
+* **1. Setup Inicial (Bootstrap)**
 
  Executado uma única vez na máquina alvo para configurar o ambiente de privilégios:
 `ansible-playbook ansible/playbooks/presetup.yaml -i ansible/playbooks/hosts.ini --ask-become-pass`
 
-* 2. Deploy Completo via Ansible
+* **2. Deploy Completo via Ansible**
 
 Executa a esteira automatizada (instalação de dependências, sincronização de arquivos, subida dos serviços, testes de saúde e salvamento de backup):
 `ansible-playbook ansible/playbooks/playbook.yaml -i ansible/playbooks/hosts.ini`
 
 [PLACEHOLDER: Screenshot do terminal exibindo a execução bem-sucedida do playbook.yaml e o resultado do healthcheck]
 
-* 3. Validação do Serviço
+* **3. Validação do Serviço**
 
 No nó alvo, verifique o retorno da API através do Nginx:
 `curl http://localhost/projeto-korp`
@@ -87,12 +87,13 @@ Saída esperada:
 {"horario":"2026-08-07T03:00:00Z","nome":"Projeto Korp"}
 ```
 
-##Validação de Métricas e Monitoramento
+## Validação de Métricas e Monitoramento
 
 O endpoint /metrics exposto pelo serviço Go pode ser inspecionado diretamente para validação das métricas:
-Bash
 
+```
 curl http://localhost:8080/metrics
+```
 
 [PLACEHOLDER: Screenshot do endpoint /metrics exibindo o formato Prometheus]
 [PLACEHOLDER: Screenshot do Dashboard do Grafana conectado ao Prometheus]
