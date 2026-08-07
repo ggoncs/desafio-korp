@@ -174,23 +174,6 @@
       when: healthcheck_result.status is not defined or healthcheck_result.status != 200
       ignore_errors: no
         
-        - name: Restaurar backup anterior (se existir)
-          command: "rsync -av --delete /opt/backup_{{ project_name }}/ {{ deploy_path }}/"
-          args:
-            chdir: /opt
-          ignore_errors: yes
-        
-        - name: Subir versão anterior
-          command: /usr/bin/docker compose up -d
-          args:
-            chdir: "{{ deploy_path }}"
-        
-        - name: Falhar o playbook indicando rollback realizado
-          fail:
-            msg: "Healthcheck falhou! Rollback executado para versão anterior."
-      when: healthcheck_result.status is not defined or healthcheck_result.status != 200
-      ignore_errors: no
-    
     - name: Criar diretório de backup (se não existir)
       file:
         path: "/opt/backup_{{ project_name }}"
