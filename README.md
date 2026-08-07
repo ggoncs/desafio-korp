@@ -77,7 +77,7 @@ O ambiente foi provisionado de forma isolada em Proxmox, utilizando o sistema op
 Executa a esteira automatizada (instalação de dependências, sincronização de arquivos, subida dos serviços, testes de saúde e salvamento de backup):
 `ansible-playbook ansible/playbooks/playbook.yaml -i ansible/playbooks/hosts.ini`
 
-[PLACEHOLDER: Screenshot do terminal exibindo a execução bem-sucedida do playbook.yaml e o resultado do healthcheck]
+<img width="1922" height="1053" alt="automacao-completa" src="https://github.com/user-attachments/assets/a89a0067-8c77-4ed1-bbf7-24ef6a4a8ad8" />
 
 * **3. Validação do Serviço**
 
@@ -97,6 +97,5 @@ O endpoint /metrics exposto pelo serviço Go pode ser inspecionado diretamente p
 curl http://localhost:8080/metrics
 ```
 
-[PLACEHOLDER: Screenshot do endpoint /metrics exibindo o formato Prometheus]
-[PLACEHOLDER: Screenshot do Dashboard do Grafana conectado ao Prometheus]
-"""
+<img width="1922" height="1053" alt="endpoint-metrics" src="https://github.com/user-attachments/assets/8a259ad7-2dc0-4800-8610-eb55e952cda7" />
+<img width="1922" height="1053" alt="win10-vm-dashboards" src="https://github.com/user-attachments/assets/eb56e99f-0a68-40c0-b65a-eb7fbc95e3bf" />"""
